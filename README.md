@@ -1,6 +1,6 @@
-# Oil Company Model - AnyLogic Wrapper
+# ⭐️🩰️Oil Company Model - AnyLogic Wrapper
 
-Go backend wrapper for AnyLogic oil company simulation model with web frontend.
+Go backend wrapper for AnyLogic oil company simulation model with web frontend. 
 
 ## Quick Start
 
