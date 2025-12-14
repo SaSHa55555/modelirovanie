@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oil Company Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #a07d3a;
+            --accent-blue: #4a9eff;
+            --accent-green: #4ade80;
+            --accent-purple: #a78bfa;
+            --text-primary: #e8e8ed;
+            --text-secondary: #8b8b96;
+            --border-color: #2a2a36;
+            --success: #4ade80;
+            --error: #f87171;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(74, 158, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left { text-align: left; }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--accent-gold);
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle { color: var(--text-secondary); font-size: 0.85rem; }
+
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+
+        .user-badge {
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .user-badge span { color: var(--accent-gold); }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover { border-color: var(--error); color: var(--error); }
+
+        .auth-panel { max-width: 400px; margin: 4rem auto; }
+
+        .auth-tabs { display: flex; margin-bottom: 1.5rem; }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .auth-tab:first-child { border-radius: 8px 0 0 8px; }
+        .auth-tab:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+
+        .auth-tab.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-group { margin-bottom: 1.25rem; }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            opacity: 0.7;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dim) 100%);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
+        }
+
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn.loading { position: relative; color: transparent; }
+
+        .btn.loading::after {
+            content: "";
+            position: absolute;
+            width: 20px; height: 20px;
+            top: 50%; left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--bg-primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            margin-top: 1rem;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            box-shadow: 0 8px 24px rgba(74, 158, 255, 0.3);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .results-panel { min-height: 400px; }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .status-message.error {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--error);
+        }
+
+        .status-message.success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            color: var(--success);
+        }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .placeholder-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .results-table th, .results-table td {
+            padding: 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .results-table th:first-child, .results-table td:first-child { text-align: left; }
+        .results-table tbody tr:hover { background: rgba(212, 168, 83, 0.05); }
+        .results-table td.revenue { color: var(--accent-gold); font-weight: 500; }
+        .results-table td.success { color: var(--success); }
+        .results-table td.failed { color: var(--error); }
+
+        .results-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-card .label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-card .value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .table-wrapper { max-height: 300px; overflow-y: auto; }
+
+        .table-wrapper::-webkit-scrollbar { width: 6px; }
+        .table-wrapper::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        /* Charts */
+        .charts-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+
+        .chart-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 280px;
+        }
+
+        .chart-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-panel">
+            <h1 style="text-align: center; margin-bottom: 0.5rem;">Oil Company Model</h1>
+            <p class="subtitle" style="text-align: center; margin-bottom: 2rem;">AnyLogic Simulation • System Dynamics</p>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="showAuthTab('register')">Register</button>
+            </div>
+
+            <div class="card">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="loginUsername" placeholder="admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="admin123" required>
+                    </div>
+                    <div id="loginError" class="status-message error hidden"></div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="regUsername" placeholder="newuser" required minlength="3">
+                        <div class="input-hint">Minimum 3 characters</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" placeholder="••••" required minlength="4">
+                        <div class="input-hint">Minimum 4 characters</div>
+                    </div>
+                    <div id="regError" class="status-message error hidden"></div>
+                    <div id="regSuccess" class="status-message success hidden"></div>
+                    <button type="submit" class="btn">Register</button>
+                </form>
+            </div>
+
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                Default: admin/admin123 or user/user123
+            </p>
+        </div>
+
+        <!-- Main App Section -->
+        <div id="appSection" class="hidden">
+            <header>
+                <div class="header-left">
+                    <h1>Oil Company Model</h1>
+                    <p class="subtitle">AnyLogic Simulation • System Dynamics</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-badge">Logged in as <span id="displayUsername"></span></div>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <div class="main-grid">
+                <div class="card">
+                    <div class="card-title">Model Parameters</div>
+                    <form id="modelForm">
+                        <div class="form-group">
+                            <label for="scenario">Scenario</label>
+                            <select id="scenario" name="scenario">
+                                <option value="1">1 — Baseline</option>
+                                <option value="2">2 — Moderate Growth</option>
+                                <option value="3">3 — Aggressive Expansion</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="drillingRate">Drilling Rate</label>
+                            <input type="number" id="drillingRate" value="50" min="1" max="200">
+                            <div class="input-hint">New wells per year (1-200)</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="oilPrice">Oil Price ($/barrel)</label>
+                            <input type="number" id="oilPrice" value="80" min="10" max="200" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="exchangeRate">Exchange Rate (RUB/USD)</label>
+                            <input type="number" id="exchangeRate" value="75" min="30" max="200" step="0.01">
+                        </div>
+                        <button type="submit" class="btn" id="submitBtn">Run Simulation</button>
+                    </form>
+                </div>
+
+                <div class="card results-panel">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="showTab('results')">Results</button>
+                        <button class="tab-btn" onclick="showTab('history')">History</button>
+                    </div>
+                    
+                    <div id="resultsTab">
+                        <div id="results">
+                            <div class="placeholder">
+                                <div class="placeholder-icon">⛽</div>
+                                <p>Configure parameters and run the simulation<br>to see the results here.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Charts Section -->
+                        <div id="chartsSection" class="charts-section hidden">
+                            <button class="btn btn-secondary" id="showChartsBtn" onclick="toggleCharts()">
+                                📊 Show Charts
+                            </button>
+                            <div id="chartsContainer" class="hidden">
+                                <div class="charts-grid">
+                                    <div class="chart-container">
+                                        <div class="chart-title">Revenue Over Time</div>
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
+                                    <div class="chart-container">
+                                        <div class="chart-title">Production Volume Over Time</div>
+                                        <canvas id="productionChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="charts-grid" style="margin-top: 1rem;">
+                                    <div class="chart-container">
+                                        <div class="chart-title">New Wells Fund Over Time</div>
+                                        <canvas id="newWellsChart"></canvas>
+                                    </div>
+                                    <div class="chart-container">
+                                        <div class="chart-title">Old Wells Fund Over Time</div>
+                                        <canvas id="oldWellsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="historyTab" class="hidden">
+                        <div id="historyContent">
+                            <div class="placeholder">
+                                <div class="placeholder-icon">📋</div>
+                                <p>Loading history...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer>MIREA • Modeling Course • Practice Work №11</footer>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = localStorage.getItem('currentUser');
+        let lastResults = null;
+        let revenueChart = null;
+        let productionChart = null;
+        let newWellsChart = null;
+        let oldWellsChart = null;
+
+        if (authToken && currentUser) {
+            showApp();
+        }
+
+        function showAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.auth-tab:${tab === 'login' ? 'first-child' : 'last-child'}`).classList.add('active');
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('regError').classList.add('hidden');
+            document.getElementById('regSuccess').classList.add('hidden');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    authToken = data.data.token;
+                    currentUser = data.data.username;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', currentUser);
+                    showApp();
+                } else {
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Network error';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const errorDiv = document.getElementById('regError');
+            const successDiv = document.getElementById('regSuccess');
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    errorDiv.classList.add('hidden');
+                    successDiv.textContent = 'Registration successful! Please login.';
+                    successDiv.classList.remove('hidden');
+                    setTimeout(() => showAuthTab('login'), 1500);
+                } else {
+                    successDiv.classList.add('hidden');
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Network error';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        function showApp() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('displayUsername').textContent = currentUser;
+            loadHistory();
+        }
+
+        function logout() {
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            authToken = null;
+            currentUser = null;
+            lastResults = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('appSection').classList.add('hidden');
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab-btn:${tab === 'results' ? 'first-child' : 'last-child'}`).classList.add('active');
+            document.getElementById('resultsTab').classList.toggle('hidden', tab !== 'results');
+            document.getElementById('historyTab').classList.toggle('hidden', tab !== 'history');
+            if (tab === 'history') loadHistory();
+        }
+
+        async function loadHistory() {
+            const container = document.getElementById('historyContent');
+            try {
+                const res = await fetch('/api/history', {
+                    headers: { 'Authorization': 'Bearer ' + authToken }
+                });
+                const data = await res.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = `
+                        <div class="table-wrapper">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Scenario</th>
+                                        <th>Drilling</th>
+                                        <th>Oil $</th>
+                                        <th>Rate</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.data.map(r => `
+                                        <tr>
+                                            <td>${new Date(r.timestamp).toLocaleString()}</td>
+                                            <td>${r.scenario}</td>
+                                            <td>${r.drillingRate}</td>
+                                            <td>${r.oilPrice}</td>
+                                            <td>${r.exchangeRate}</td>
+                                            <td class="${r.success ? 'success' : 'failed'}">${r.success ? '✓ ' + r.resultCount + ' pts' : '✗ Failed'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<div class="placeholder"><div class="placeholder-icon">📋</div><p>No history yet</p></div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="status-message error">Failed to load history</div>';
+            }
+        }
+
+        document.getElementById('modelForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            // Hide charts when starting new simulation
+            document.getElementById('chartsSection').classList.add('hidden');
+            document.getElementById('chartsContainer').classList.add('hidden');
+            document.getElementById('showChartsBtn').textContent = '📊 Show Charts';
+
+            const params = {
+                scenario: parseInt(document.getElementById('scenario').value),
+                drillingRate: parseInt(document.getElementById('drillingRate').value),
+                oilPrice: parseFloat(document.getElementById('oilPrice').value),
+                exchangeRate: parseFloat(document.getElementById('exchangeRate').value)
+            };
+
+            try {
+                const res = await fetch('/api/run-model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify(params)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    lastResults = data.data.results;
+                    displayResults(data.data);
+                } else {
+                    if (res.status === 401) {
+                        logout();
+                    } else {
+                        showError(data.error);
+                    }
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        });
+
+        function showError(message) {
+            lastResults = null;
+            document.getElementById('chartsSection').classList.add('hidden');
+            document.getElementById('results').innerHTML = `
+                <div class="status-message error">⚠️ ${escapeHtml(message)}</div>
+                <div class="placeholder"><div class="placeholder-icon">❌</div><p>Simulation failed</p></div>
+            `;
+        }
+
+        function displayResults(data) {
+            const results = data.results || [];
+            if (results.length === 0) {
+                document.getElementById('results').innerHTML = '<div class="status-message error">No results returned</div>';
+                document.getElementById('chartsSection').classList.add('hidden');
+                return;
+            }
+
+            const lastResult = results[results.length - 1];
+            const totalRevenue = results.reduce((sum, r) => sum + r.revenue, 0);
+            const avgRevenue = totalRevenue / results.length;
+            const maxRevenue = Math.max(...results.map(r => r.revenue));
+
+            document.getElementById('results').innerHTML = `
+                <div class="status-message success">✓ Simulation completed • ${results.length} data points</div>
+                <div class="results-summary">
+                    <div class="summary-card"><div class="label">Total Revenue</div><div class="value">${formatNumber(totalRevenue)}</div></div>
+                    <div class="summary-card"><div class="label">Average</div><div class="value">${formatNumber(avgRevenue)}</div></div>
+                    <div class="summary-card"><div class="label">Peak</div><div class="value">${formatNumber(maxRevenue)}</div></div>
+                    <div class="summary-card"><div class="label">Final Year</div><div class="value">${lastResult.year.toFixed(1)}</div></div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="results-table">
+                        <thead><tr><th>Year</th><th>Revenue</th><th>Production</th><th>New Wells</th><th>Old Wells</th></tr></thead>
+                        <tbody>${results.map(r => `
+                            <tr>
+                                <td>${r.year.toFixed(2)}</td>
+                                <td class="revenue">${formatNumber(r.revenue)}</td>
+                                <td>${formatNumber(r.productionVolume)}</td>
+                                <td>${formatNumber(r.newWellsFund)}</td>
+                                <td>${formatNumber(r.oldWellsFund)}</td>
+                            </tr>
+                        `).join('')}</tbody>
+                    </table>
+                </div>
+            `;
+
+            // Show charts section
+            document.getElementById('chartsSection').classList.remove('hidden');
+        }
+
+        function toggleCharts() {
+            const container = document.getElementById('chartsContainer');
+            const btn = document.getElementById('showChartsBtn');
+            
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                btn.textContent = '📊 Hide Charts';
+                buildCharts();
+            } else {
+                container.classList.add('hidden');
+                btn.textContent = '📊 Show Charts';
+            }
+        }
+
+        function buildCharts() {
+            if (!lastResults || lastResults.length === 0) return;
+
+            const labels = lastResults.map(r => r.year.toFixed(0));
+            const revenues = lastResults.map(r => r.revenue);
+            const productions = lastResults.map(r => r.productionVolume);
+            const newWells = lastResults.map(r => r.newWellsFund);
+            const oldWells = lastResults.map(r => r.oldWellsFund);
+
+            // Destroy existing charts
+            if (revenueChart) revenueChart.destroy();
+            if (productionChart) productionChart.destroy();
+            if (newWellsChart) newWellsChart.destroy();
+            if (oldWellsChart) oldWellsChart.destroy();
+
+            const getChartOptions = (color) => ({
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2a36' },
+                        ticks: { color: '#8b8b96', font: { size: 9 }, maxTicksLimit: 10 }
+                    },
+                    y: {
+                        grid: { color: '#2a2a36' },
+                        ticks: { 
+                            color: '#8b8b96', 
+                            font: { size: 9 },
+                            callback: function(value) {
+                                if (value >= 1e9) return (value / 1e9).toFixed(1) + 'B';
+                                if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                                if (value >= 1e3) return (value / 1e3).toFixed(1) + 'K';
+                                return value.toFixed(0);
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Revenue Chart
+            revenueChart = new Chart(document.getElementById('revenueChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: revenues,
+                        borderColor: '#d4a853',
+                        backgroundColor: 'rgba(212, 168, 83, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1
+                    }]
+                },
+                options: getChartOptions('#d4a853')
+            });
+
+            // Production Chart
+            productionChart = new Chart(document.getElementById('productionChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Production',
+                        data: productions,
+                        borderColor: '#4a9eff',
+                        backgroundColor: 'rgba(74, 158, 255, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1
+                    }]
+                },
+                options: getChartOptions('#4a9eff')
+            });
+
+            // New Wells Chart
+            newWellsChart = new Chart(document.getElementById('newWellsChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'New Wells',
+                        data: newWells,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74, 222, 128, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1
+                    }]
+                },
+                options: getChartOptions('#4ade80')
+            });
+
+            // Old Wells Chart
+            oldWellsChart = new Chart(document.getElementById('oldWellsChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Old Wells',
+                        data: oldWells,
+                        borderColor: '#a78bfa',
+                        backgroundColor: 'rgba(167, 139, 250, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1
+                    }]
+                },
+                options: getChartOptions('#a78bfa')
+            });
+        }
+
+        function formatNumber(num) {
+            if (num == null) return '—';
+            if (Math.abs(num) >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(2);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
